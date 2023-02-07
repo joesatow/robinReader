@@ -1,37 +1,60 @@
-import glob, json
+import glob
 import pandas as pd
+
+# find CSV file.  make sure there's only one in directory.
+# will set to latest one.
 for file in glob.glob("*.csv"):
     accountCSV = file
 
+# create pandas dataframe
 df = pd.read_csv(accountCSV)
-descriptions = df['Description'] 
-accountDict = df.to_dict(orient='records')
-lastContract = accountDict[0]['Description']
-currentNet = 0
 
+# convert dataframe to dictionary
+accountDict = df.to_dict(orient='records')
+
+# contract dictionary to track positions until closed
+contractDict = {}
+
+# function for use in filtering accountDict below.
+# get rid of anything that isnt BTO or STC
 def determine(str):
     transactionCode = str['Trans Code']
     if transactionCode != 'BTO' and transactionCode != 'STC':
         return True
-    
+
+# Filter account dictionary
 filteredAccountDict = [x for x in accountDict if not determine(x)]
 
-for line in filteredAccountDict:
-    transactionCode = line['Trans Code']
-    description = line['Description']
-
-    amount = line['Amount'].replace('$','').replace(',','')
+# function to fix amounts
+def fixAmount(str):
+    amount = str.replace('$','').replace(',','')
     if '(' in amount:
         amount = amount.replace('(','').replace(')','')
         amount = float(amount)
         amount = -amount
     amount = float(amount)
+    return amount
 
-    if description == lastContract:
-        currentNet += amount
-    else:
-        print(line['Description'])
-        print(currentNet)
-        currentNet = 0
-        lastContract = description
+# Iterate through account activity
+for line in filteredAccountDict:
+    description = line['Description']
+    quantity = int(line['Quantity'])
+    amount = fixAmount(line['Amount'])
+
+    if description not in contractDict:
+        contractDict[description] = {
+            'quantity': 0,
+            'net': 0
+        }
+
+    contractDict[description]['quantity'] += quantity
+    contractDict[description]['net'] += amount
+
+    if contractDict[description]['quantity'] == 0:
+        amount = round(contractDict[description]['net'],2)
+        if amount > 10000:
+            print("Current contract: " + description)
+            print("Current net: " + str(amount))
+        del contractDict[description]
+        
 
