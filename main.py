@@ -44,7 +44,9 @@ for line in filteredAccountDict:
     if description not in contractDict:
         contractDict[description] = {
             'quantity': 0,
-            'net': 0
+            'net': 0,
+            'startDate': '',
+            'endDate': line['Process Date']
         }
 
     contractDict[description]['quantity'] += quantity
@@ -55,6 +57,8 @@ for line in filteredAccountDict:
         if amount > 10000:
             print("Current contract: " + description)
             print("Current net: " + str(amount))
+            print("Buy date: " + line['Process Date'])
+            print("Sell date: " + contractDict[description]['endDate'])
         del contractDict[description]
         
 
