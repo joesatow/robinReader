@@ -9,7 +9,7 @@ sc_cookie = 'kAcSOqF21Fu85e7zjz7ZN2U4ZRhfV3WpwPAoE3Z7kBw&LswwdoUaIvS8ltyTt5jkRh4
 user_agent = generate_user_agent()
 
 # [0] = Daily, [1] = 4h, [2] = 1h, [3] = 1w
-iValues = ['p55738127392', 'p57289512688', 'p23851798625', 'p57719994331']
+iValues = ['p07557323106', 'p07557323106', 'p23851798625', 'p07557323106']
 
 def get_chart(symbol, tf, startDate, endDate):
     if tf == '1d':

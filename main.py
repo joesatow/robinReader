@@ -68,24 +68,28 @@ for line in filteredAccountDict:
         sellDateSplit = sellDate.split('/')
         sellDateDay, sellDateMonth, sellDateYear = int(sellDateSplit[1]), int(sellDateSplit[0]), int(sellDateSplit[2])
 
-        if amount > 1000:
+        if amount > 10000:
             print("Current contract: " + description)
             print("Current net: " + str(amount))
             print("Buy date: " + buyDate)
             print("Sell date: " + sellDate)
 
-            chartStartDate = (datetime.date(buyDateYear, buyDateMonth, buyDateDay) - datetime.timedelta(days = 210)).strftime("%Y-%m-%d")
-            chartEndDate = (datetime.date(sellDateYear, sellDateMonth, sellDateDay) + datetime.timedelta(days = 10)).strftime("%Y-%m-%d")
+            chartStartDateDaily = (datetime.date(buyDateYear, buyDateMonth, buyDateDay) - datetime.timedelta(days = 200)).strftime("%Y-%m-%d")
+            chartEndDateDaily = (datetime.date(sellDateYear, sellDateMonth, sellDateDay) + datetime.timedelta(days = 10)).strftime("%Y-%m-%d")
+
+            chartStartDateWeekly = (datetime.date(buyDateYear, buyDateMonth, buyDateDay) - datetime.timedelta(days = 730)).strftime("%Y-%m-%d")
+            chartEndDateWeekly = (datetime.date(sellDateYear, sellDateMonth, sellDateDay) + datetime.timedelta(days = 182)).strftime("%Y-%m-%d")
 
             obj = {
                 "contractDescription": description,
                 "net": str(amount),
                 "buyDate": buyDate,
                 "sellDate": sellDate,
-                "chartStart": chartStartDate,
-                "chartEnd": chartEndDate,
+                "chartStart": chartStartDateDaily,
+                "chartEnd": chartEndDateDaily,
             }
-            get_chart('AAPL', '1d', chartStartDate, chartEndDate)
+            get_chart('AAPL', '1d', chartStartDateDaily, chartEndDateDaily)
+            get_chart('AAPL', '1w', chartStartDateWeekly, chartEndDateWeekly)
             break
         del contractDict[description]
         
