@@ -54,7 +54,7 @@ for line in filteredAccountDict:
 
     if contractDict[description]['quantity'] == 0:
         amount = round(contractDict[description]['net'],2)
-        if amount > 10000:
+        if amount > 1000:
             print("Current contract: " + description)
             print("Current net: " + str(amount))
             print("Buy date: " + line['Process Date'])
