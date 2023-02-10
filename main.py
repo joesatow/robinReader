@@ -1,5 +1,6 @@
 import glob
 import pandas as pd
+import csv
 import datetime
 from helper_funcs.downloadFunctions import get_chart
 
@@ -71,7 +72,7 @@ for line in filteredAccountDict:
         sellDateSplit = sellDate.split('/')
         sellDateDay, sellDateMonth, sellDateYear = int(sellDateSplit[1]), int(sellDateSplit[0]), int(sellDateSplit[2])
 
-        if amount > 10000:
+        if amount > 1000 or amount < -1000:
             print("Current contract: " + description)
             print("Current net: " + str(amount))
             print("Buy date: " + buyDate)
@@ -91,10 +92,19 @@ for line in filteredAccountDict:
                 "sellDate": sellDate
             }
             tradeList.append(obj)
-            get_chart(ticker, '1d', chartStartDateDaily, chartEndDateDaily)
-            get_chart(ticker, '1w', chartStartDateWeekly, chartEndDateWeekly)
+            #get_chart(ticker, '1d', chartStartDateDaily, chartEndDateDaily)
+            #get_chart(ticker, '1w', chartStartDateWeekly, chartEndDateWeekly)
             
         del contractDict[description]
+
+# field names 
+fields = ['ticker', 'contractDescription', 'net', 'buyDate', 'sellDate'] 
+
+with open('output.csv', 'w', newline='') as file: 
+    writer = csv.DictWriter(file, fieldnames = fields)
+
+    writer.writeheader()
+    writer.writerows(tradeList)
 
 pass
         
