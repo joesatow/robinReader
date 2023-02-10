@@ -1,5 +1,7 @@
 import glob
 import pandas as pd
+import datetime
+from helper_funcs.downloadFunctions import get_chart
 
 # find CSV file.  make sure there's only one in directory.
 # will set to latest one.
@@ -14,6 +16,9 @@ accountDict = df.to_dict(orient='records')
 
 # contract dictionary to track positions until closed
 contractDict = {}
+
+# list of trades
+tradeList = []
 
 # function for use in filtering accountDict below.
 # get rid of anything that isnt BTO or STC
@@ -54,11 +59,34 @@ for line in filteredAccountDict:
 
     if contractDict[description]['quantity'] == 0:
         amount = round(contractDict[description]['net'],2)
+        
+        buyDate = line['Process Date']
+        buyDateSplit = buyDate.split('/')
+        buyDateDay, buyDateMonth, buyDateYear = int(buyDateSplit[1]), int(buyDateSplit[0]), int(buyDateSplit[2])
+        
+        sellDate = contractDict[description]['endDate']
+        sellDateSplit = sellDate.split('/')
+        sellDateDay, sellDateMonth, sellDateYear = int(sellDateSplit[1]), int(sellDateSplit[0]), int(sellDateSplit[2])
+
         if amount > 1000:
             print("Current contract: " + description)
             print("Current net: " + str(amount))
-            print("Buy date: " + line['Process Date'])
-            print("Sell date: " + contractDict[description]['endDate'])
+            print("Buy date: " + buyDate)
+            print("Sell date: " + sellDate)
+
+            chartStartDate = (datetime.date(buyDateYear, buyDateMonth, buyDateDay) - datetime.timedelta(days = 210)).strftime("%Y-%m-%d")
+            chartEndDate = (datetime.date(sellDateYear, sellDateMonth, sellDateDay) + datetime.timedelta(days = 10)).strftime("%Y-%m-%d")
+
+            obj = {
+                "contractDescription": description,
+                "net": str(amount),
+                "buyDate": buyDate,
+                "sellDate": sellDate,
+                "chartStart": chartStartDate,
+                "chartEnd": chartEndDate,
+            }
+            get_chart('AAPL', '1d', chartStartDate, chartEndDate)
+            break
         del contractDict[description]
         
 

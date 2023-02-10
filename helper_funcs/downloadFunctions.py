@@ -11,7 +11,7 @@ user_agent = generate_user_agent()
 # [0] = Daily, [1] = 4h, [2] = 1h, [3] = 1w
 iValues = ['p55738127392', 'p57289512688', 'p23851798625', 'p57719994331']
 
-def get_chart(symbol, tf):
+def get_chart(symbol, tf, startDate, endDate):
     if tf == '1d':
         selector = 0
     if tf == '4h':
@@ -25,10 +25,10 @@ def get_chart(symbol, tf):
 
     # [0] = Daily, [1] = 4h, [2] = 1h, [3] = 1w
     payloadObjects = [
-        {"s": symbol, "p": "D", "b": "6", "g": '0', 'i': iValues[selector], 'r': millisecondsEpoch},
-        {"s": symbol, "p": "195", "b": "6", "g": "0", "i": iValues[selector], 'r': millisecondsEpoch},
-        {"s": symbol, "p": "60", "b": "6", "g": "0", "i": iValues[selector], 'r': millisecondsEpoch},
-        {"s": symbol, "p": "W", "b": "6", "g": "0", "i": iValues[selector], 'r': millisecondsEpoch}
+        {"s": symbol, "p": "D", "st": startDate, "en": endDate, 'i': iValues[selector], 'r': millisecondsEpoch},
+        {"s": symbol, "p": "195", "st": startDate, "en": endDate, "i": iValues[selector], 'r': millisecondsEpoch},
+        {"s": symbol, "p": "60", "st": startDate, "en": endDate, "i": iValues[selector], 'r': millisecondsEpoch},
+        {"s": symbol, "p": "W", "st": startDate, "en": endDate, "i": iValues[selector], 'r': millisecondsEpoch}
     ]
 
     encoded_payload = urlencode(
@@ -56,4 +56,4 @@ def download_chart_image(page_content: requests.Response, url, tf):
     
     return file_name
 
-get_chart('AAPL','4h')
+#get_chart('AAPL', '1d', '2022-07-05', '2023-02-1')
