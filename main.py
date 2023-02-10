@@ -72,30 +72,34 @@ for line in filteredAccountDict:
         sellDateSplit = sellDate.split('/')
         sellDateDay, sellDateMonth, sellDateYear = int(sellDateSplit[1]), int(sellDateSplit[0]), int(sellDateSplit[2])
 
-        if amount > 1000 or amount < -1000:
-            print("Current contract: " + description)
-            print("Current net: " + str(amount))
-            print("Buy date: " + buyDate)
-            print("Sell date: " + sellDate)
+        # if amount > 1000 or amount < -1000:
+        print("Current contract: " + description)
+        print("Current net: " + str(amount))
+        print("Buy date: " + buyDate)
+        print("Sell date: " + sellDate)
 
-            chartStartDateDaily = (datetime.date(buyDateYear, buyDateMonth, buyDateDay) - datetime.timedelta(days = 170)).strftime("%Y-%m-%d")
-            chartEndDateDaily = (datetime.date(sellDateYear, sellDateMonth, sellDateDay) + datetime.timedelta(days = 10)).strftime("%Y-%m-%d")
+        chartStartDateDaily = (datetime.date(buyDateYear, buyDateMonth, buyDateDay) - datetime.timedelta(days = 170)).strftime("%Y-%m-%d")
+        chartEndDateDaily = (datetime.date(sellDateYear, sellDateMonth, sellDateDay) + datetime.timedelta(days = 10)).strftime("%Y-%m-%d")
 
-            chartStartDateWeekly = (datetime.date(buyDateYear, buyDateMonth, buyDateDay) - datetime.timedelta(days = 600)).strftime("%Y-%m-%d")
-            chartEndDateWeekly = (datetime.date(sellDateYear, sellDateMonth, sellDateDay) + datetime.timedelta(days = 82)).strftime("%Y-%m-%d")
+        chartStartDateWeekly = (datetime.date(buyDateYear, buyDateMonth, buyDateDay) - datetime.timedelta(days = 600)).strftime("%Y-%m-%d")
+        chartEndDateWeekly = (datetime.date(sellDateYear, sellDateMonth, sellDateDay) + datetime.timedelta(days = 82)).strftime("%Y-%m-%d")
 
-            obj = {
-                "ticker": ticker,
-                "contractDescription": description,
-                "net": str(amount),
-                "buyDate": buyDate,
-                "sellDate": sellDate
-            }
-            tradeList.append(obj)
-            #get_chart(ticker, '1d', chartStartDateDaily, chartEndDateDaily)
-            #get_chart(ticker, '1w', chartStartDateWeekly, chartEndDateWeekly)
+        obj = {
+            "ticker": ticker,
+            "contractDescription": description,
+            "net": str(amount),
+            "buyDate": buyDate,
+            "sellDate": sellDate
+        }
+        tradeList.append(obj)
+        #get_chart(ticker, '1d', chartStartDateDaily, chartEndDateDaily)
+        #get_chart(ticker, '1w', chartStartDateWeekly, chartEndDateWeekly)
             
         del contractDict[description]
+
+# take care of leftover contracts that never evened out in quantity, meaning they just expired.
+for item in contractDict:
+    pass
 
 # field names 
 fields = ['ticker', 'contractDescription', 'net', 'buyDate', 'sellDate'] 
