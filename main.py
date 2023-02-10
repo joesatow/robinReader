@@ -45,22 +45,25 @@ for line in filteredAccountDict:
     description = line['Description']
     quantity = int(line['Quantity'])
     amount = fixAmount(line['Amount'])
+    ticker = line['Instrument']
 
     if description not in contractDict:
         contractDict[description] = {
+            'ticker': '',
             'quantity': 0,
             'net': 0,
             'startDate': '',
             'endDate': line['Process Date']
         }
 
+    contractDict[description]['ticker'] = ticker
     contractDict[description]['quantity'] += quantity
     contractDict[description]['net'] += amount
 
     if contractDict[description]['quantity'] == 0:
         amount = round(contractDict[description]['net'],2)
         
-        buyDate = line['Process Date']
+        buyDate = line['Process Date'] # buy date must be set here since CSV file shows orders from newest to oldest, from last sell -> first buy.  first buy will be here, once quantity nets out to 0.
         buyDateSplit = buyDate.split('/')
         buyDateDay, buyDateMonth, buyDateYear = int(buyDateSplit[1]), int(buyDateSplit[0]), int(buyDateSplit[2])
         
@@ -74,23 +77,25 @@ for line in filteredAccountDict:
             print("Buy date: " + buyDate)
             print("Sell date: " + sellDate)
 
-            chartStartDateDaily = (datetime.date(buyDateYear, buyDateMonth, buyDateDay) - datetime.timedelta(days = 200)).strftime("%Y-%m-%d")
+            chartStartDateDaily = (datetime.date(buyDateYear, buyDateMonth, buyDateDay) - datetime.timedelta(days = 170)).strftime("%Y-%m-%d")
             chartEndDateDaily = (datetime.date(sellDateYear, sellDateMonth, sellDateDay) + datetime.timedelta(days = 10)).strftime("%Y-%m-%d")
 
-            chartStartDateWeekly = (datetime.date(buyDateYear, buyDateMonth, buyDateDay) - datetime.timedelta(days = 730)).strftime("%Y-%m-%d")
-            chartEndDateWeekly = (datetime.date(sellDateYear, sellDateMonth, sellDateDay) + datetime.timedelta(days = 182)).strftime("%Y-%m-%d")
+            chartStartDateWeekly = (datetime.date(buyDateYear, buyDateMonth, buyDateDay) - datetime.timedelta(days = 600)).strftime("%Y-%m-%d")
+            chartEndDateWeekly = (datetime.date(sellDateYear, sellDateMonth, sellDateDay) + datetime.timedelta(days = 82)).strftime("%Y-%m-%d")
 
             obj = {
+                "ticker": ticker,
                 "contractDescription": description,
                 "net": str(amount),
                 "buyDate": buyDate,
-                "sellDate": sellDate,
-                "chartStart": chartStartDateDaily,
-                "chartEnd": chartEndDateDaily,
+                "sellDate": sellDate
             }
-            get_chart('AAPL', '1d', chartStartDateDaily, chartEndDateDaily)
-            get_chart('AAPL', '1w', chartStartDateWeekly, chartEndDateWeekly)
-            break
+            tradeList.append(obj)
+            get_chart(ticker, '1d', chartStartDateDaily, chartEndDateDaily)
+            get_chart(ticker, '1w', chartStartDateWeekly, chartEndDateWeekly)
+            
         del contractDict[description]
+
+pass
         
 
