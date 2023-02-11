@@ -4,10 +4,8 @@ import csv
 import datetime
 from helper_funcs.downloadFunctions import get_chart
 
-# find CSV file.  make sure there's only one in directory.
-# will set to latest one.
-for file in glob.glob("*.csv"):
-    accountCSV = file
+# set filename to CSV file of account activity
+accountCSV = 'account_activity_8255.csv'
 
 # create pandas dataframe
 df = pd.read_csv(accountCSV)
@@ -25,7 +23,7 @@ tradeList = []
 # get rid of anything that isnt BTO or STC
 def determine(str):
     transactionCode = str['Trans Code']
-    if transactionCode != 'BTO' and transactionCode != 'STC':
+    if transactionCode != 'BTO' and transactionCode != 'STC' and transactionCode != 'OEXP':
         return True
 
 # Filter account dictionary
@@ -43,10 +41,18 @@ def fixAmount(str):
 
 # Iterate through account activity
 for line in filteredAccountDict:
-    description = line['Description']
-    quantity = int(line['Quantity'])
-    amount = fixAmount(line['Amount'])
-    ticker = line['Instrument']
+    transactionCode = line['Trans Code']
+
+    if transactionCode == 'OEXP':
+        description = line['Description'].replace('call','Call').replace('put','Put').replace('Option Expiration for ', '')
+        ticker = description.split(' ')[0]
+        quantity = -int(line['Quantity'].replace('S',''))
+        amount = 0
+    else:
+        description = line['Description']
+        quantity = int(line['Quantity'])
+        amount = fixAmount(line['Amount'])
+        ticker = line['Instrument']
 
     if description not in contractDict:
         contractDict[description] = {
@@ -73,10 +79,10 @@ for line in filteredAccountDict:
         sellDateDay, sellDateMonth, sellDateYear = int(sellDateSplit[1]), int(sellDateSplit[0]), int(sellDateSplit[2])
 
         # if amount > 1000 or amount < -1000:
-        print("Current contract: " + description)
-        print("Current net: " + str(amount))
-        print("Buy date: " + buyDate)
-        print("Sell date: " + sellDate)
+        # print("Current contract: " + description)
+        # print("Current net: " + str(amount))
+        # print("Buy date: " + buyDate)
+        # print("Sell date: " + sellDate)
 
         chartStartDateDaily = (datetime.date(buyDateYear, buyDateMonth, buyDateDay) - datetime.timedelta(days = 170)).strftime("%Y-%m-%d")
         chartEndDateDaily = (datetime.date(sellDateYear, sellDateMonth, sellDateDay) + datetime.timedelta(days = 10)).strftime("%Y-%m-%d")
@@ -97,14 +103,11 @@ for line in filteredAccountDict:
             
         del contractDict[description]
 
-# take care of leftover contracts that never evened out in quantity, meaning they just expired.
-for item in contractDict:
-    pass
 
 # field names 
 fields = ['ticker', 'contractDescription', 'net', 'buyDate', 'sellDate'] 
 
-with open('output.csv', 'w', newline='') as file: 
+with open('C:\\Users\\Joe Satow\\OneDrive\\Random\\Documents\\GitHub\\robinReader\\output.csv', 'w', newline='') as file: 
     writer = csv.DictWriter(file, fieldnames = fields)
 
     writer.writeheader()

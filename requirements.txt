@@ -1,2 +1,3 @@
 pandas
 user_agent
+requests
