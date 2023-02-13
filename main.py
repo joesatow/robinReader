@@ -3,6 +3,7 @@ import csv
 import datetime
 from helper_funcs.downloadFunctions import get_chart
 from operator import itemgetter
+import time
 
 # set filename to CSV file of account activity
 accountCSV = 'account_activity_8255.csv'
@@ -121,7 +122,8 @@ html_start = """<html>
 html_mid = ""
 sortedTradeList = sorted(tradeList, key=itemgetter('net'), reverse=False)
 for line in sortedTradeList:
-    if float(line['net']) < -5000:
+    net = float(line['net'])
+    if net > 20000:
         ticker = line['ticker']
 
         buyDate = line['buyDate']
@@ -140,6 +142,7 @@ for line in sortedTradeList:
         chartStartDateWeekly = (datetime.date(buyDateYear, buyDateMonth, buyDateDay) - datetime.timedelta(days = 600)).strftime("%Y-%m-%d")
         chartEndDateWeekly = (datetime.date(sellDateYear, sellDateMonth, sellDateDay) + datetime.timedelta(days = 82)).strftime("%Y-%m-%d")
 
+        time.sleep(0.5)
         dailyChartFilename = get_chart(ticker, '1d', chartStartDateDaily, chartEndDateDaily)
         weeklyChartFilename = get_chart(ticker, '1w', chartStartDateWeekly, chartEndDateWeekly)
 
