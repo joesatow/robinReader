@@ -1,4 +1,3 @@
-import glob
 import pandas as pd
 import csv
 import datetime
@@ -10,24 +9,27 @@ accountCSV = 'account_activity_8255.csv'
 # create pandas dataframe
 df = pd.read_csv(accountCSV)
 
-# convert dataframe to dictionary
-accountDict = df.to_dict(orient='records')
+# convert dataframe to list of objects
+# this is a list made from the account activity CSV
+accountActivityList = df.to_dict(orient='records')
 
 # contract dictionary to track positions until closed
+# using a dictionary is a good way to track because sometimes you open multiple options at once.
 contractDict = {}
 
 # list of trades
+# once we've run through all buys and sells for an option, we append the trade data to this list
 tradeList = []
 
-# function for use in filtering accountDict below.
-# get rid of anything that isnt BTO or STC
+# function for use in filtering accountActivityList below.
+# get rid of anything that isnt BTO or STC or OEXP
 def determine(str):
     transactionCode = str['Trans Code']
     if transactionCode != 'BTO' and transactionCode != 'STC' and transactionCode != 'OEXP':
         return True
 
-# Filter account dictionary
-filteredAccountDict = [x for x in accountDict if not determine(x)]
+# Filter account list
+filteredAccountActivityList = [x for x in accountActivityList if not determine(x)]
 
 # function to fix amounts
 def fixAmount(str):
@@ -40,13 +42,13 @@ def fixAmount(str):
     return amount
 
 # Iterate through account activity
-for line in filteredAccountDict:
+for line in filteredAccountActivityList:
     transactionCode = line['Trans Code']
 
     if transactionCode == 'OEXP':
         description = line['Description'].replace('call','Call').replace('put','Put').replace('Option Expiration for ', '')
         ticker = description.split(' ')[0]
-        quantity = -int(line['Quantity'].replace('S',''))
+        quantity = -int(line['Quantity'].replace('S','')) # with an option expiration, this will act the same as a sell, but at 0 dollars. example: selling 10 cons for $0.00. 
         amount = 0
     else:
         description = line['Description']
@@ -67,6 +69,7 @@ for line in filteredAccountDict:
     contractDict[description]['quantity'] += quantity
     contractDict[description]['net'] += amount
 
+    # once quantity in the contract dictionary equals 0, it means sells are equal to buys.  which means the trade is done.
     if contractDict[description]['quantity'] == 0:
         amount = round(contractDict[description]['net'],2)
         
@@ -77,12 +80,6 @@ for line in filteredAccountDict:
         sellDate = contractDict[description]['endDate']
         sellDateSplit = sellDate.split('/')
         sellDateDay, sellDateMonth, sellDateYear = int(sellDateSplit[1]), int(sellDateSplit[0]), int(sellDateSplit[2])
-
-        # if amount > 1000 or amount < -1000:
-        # print("Current contract: " + description)
-        # print("Current net: " + str(amount))
-        # print("Buy date: " + buyDate)
-        # print("Sell date: " + sellDate)
 
         chartStartDateDaily = (datetime.date(buyDateYear, buyDateMonth, buyDateDay) - datetime.timedelta(days = 170)).strftime("%Y-%m-%d")
         chartEndDateDaily = (datetime.date(sellDateYear, sellDateMonth, sellDateDay) + datetime.timedelta(days = 10)).strftime("%Y-%m-%d")
@@ -103,10 +100,10 @@ for line in filteredAccountDict:
             
         del contractDict[description]
 
-
-# field names 
+# field names for CSV output file
 fields = ['ticker', 'contractDescription', 'net', 'buyDate', 'sellDate'] 
 
+# two paths because it changes depending on what computer im using
 path = 'C:\\Users\\Joe Satow\\OneDrive\\Random\\Documents\\GitHub\\robinReader\\output.csv'
 path = 'output.csv'
 with open(path, 'w', newline='') as file: 
@@ -114,7 +111,5 @@ with open(path, 'w', newline='') as file:
 
     writer.writeheader()
     writer.writerows(tradeList)
-
-pass
         
 
