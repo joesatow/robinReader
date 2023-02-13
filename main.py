@@ -45,11 +45,15 @@ def fixAmount(str):
 for line in filteredAccountActivityList:
     transactionCode = line['Trans Code']
 
+    # OEXP = option expiration
+    # we'll need to get description, ticker, and quantity values differently if we're reading from a OEXP transaction code, because this is just the way Robinhood provided the data.
+    # these transactions will act the same as a 'sell'.  example: 10 contracts expired acts as 10 contracts sold for 0 dollars. 
+    # this is necessary for netting out quantity, since there's no STC transactions for some trades if you let them expire worthless.
     if transactionCode == 'OEXP':
         description = line['Description'].replace('call','Call').replace('put','Put').replace('Option Expiration for ', '')
         ticker = description.split(' ')[0]
-        quantity = -int(line['Quantity'].replace('S','')) # with an option expiration, this will act the same as a sell, but at 0 dollars. example: selling 10 cons for $0.00. 
-        amount = 0
+        quantity = -int(line['Quantity'].replace('S','')) # quantity here is how many contracts expired.  
+        amount = 0 # 0 because the option expired worthless, equivalent to selling for 0 dollars.
     else:
         description = line['Description']
         quantity = int(line['Quantity'])
@@ -66,10 +70,11 @@ for line in filteredAccountActivityList:
         }
 
     contractDict[description]['ticker'] = ticker
-    contractDict[description]['quantity'] += quantity
-    contractDict[description]['net'] += amount
+    contractDict[description]['quantity'] += quantity # add quantity.  since there's both positive (buys) and negative (sells) values, it'll eventually zero out (trade is done).
+    contractDict[description]['net'] += amount 
 
     # once quantity in the contract dictionary equals 0, it means sells are equal to buys.  which means the trade is done.
+    # create object with trade attributes and append it to the tradeList
     if contractDict[description]['quantity'] == 0:
         amount = round(contractDict[description]['net'],2)
         
@@ -92,13 +97,15 @@ for line in filteredAccountActivityList:
             "contractDescription": description,
             "net": str(amount),
             "buyDate": buyDate,
-            "sellDate": sellDate
+            "sellDate": sellDate,
+            "chartStartDaily": chartStartDateDaily,
+            "chartEndDaily": chartEndDateDaily,
+            "chartStartWeekly": chartStartDateWeekly,
+            "chartEndWeekly": chartEndDateWeekly
         }
         tradeList.append(obj)
-        #get_chart(ticker, '1d', chartStartDateDaily, chartEndDateDaily)
-        #get_chart(ticker, '1w', chartStartDateWeekly, chartEndDateWeekly)
-            
-        del contractDict[description]
+
+        del contractDict[description] # delete contract from the dictionary because the trade is done.  
 
 # field names for CSV output file
 fields = ['ticker', 'contractDescription', 'net', 'buyDate', 'sellDate'] 
