@@ -138,7 +138,15 @@ for line in tradeList:
         dailyChartFilename = get_chart(ticker, '1d', chartStartDateDaily, chartEndDateDaily)
         weeklyChartFilename = get_chart(ticker, '1w', chartStartDateDaily, chartEndDateWeekly)
 
-        html_mid += f"<h2>test ${line['ticker']}</h2><p><img src='charts\{dailyChartFilename}'><img src='charts\{weeklyChartFilename}'></p>"
+        html_mid += f"""
+        <h2>{line['contractDescription']}</h2>
+        <h3>Buy Date: {line['buyDate']}</h3>
+        <h3>Sell Date: {line['sellDate']}</h3>
+        <h3>Net: {line['net']}</h3>
+        <p>
+            <img src='charts\{dailyChartFilename}'>
+            <img src='charts\{weeklyChartFilename}'>
+        </p>"""
 
 html_end = """
 </body>
