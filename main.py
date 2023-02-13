@@ -20,6 +20,7 @@ contractDict = {}
 # list of trades
 # once we've run through all buys and sells for an option, we append the trade data to this list
 tradeList = []
+chartList = []
 
 # function for use in filtering accountActivityList below.
 # get rid of anything that isnt BTO or STC or OEXP
@@ -79,10 +80,52 @@ for line in filteredAccountActivityList:
         amount = round(contractDict[description]['net'],2)
         
         buyDate = line['Process Date'] # buy date must be set here since CSV file shows orders from newest to oldest, from last sell -> first buy.  first buy will be here, once quantity nets out to 0.
+        sellDate = contractDict[description]['endDate']
+        
+        infoObj = {
+            "ticker": ticker,
+            "contractDescription": description,
+            "net": str(amount),
+            "buyDate": buyDate,
+            "sellDate": sellDate
+        }
+        tradeList.append(infoObj)
+
+        del contractDict[description] # delete contract from the dictionary because the trade is done.  
+
+# # field names for CSV output file
+# fields = ['ticker', 'contractDescription', 'net', 'buyDate', 'sellDate'] 
+
+# # two paths because it changes depending on what computer im using
+# path = 'C:\\Users\\Joe Satow\\OneDrive\\Random\\Documents\\GitHub\\robinReader\\output.csv'
+# path = 'output.csv'
+# with open(path, 'w', newline='') as file: 
+#     writer = csv.DictWriter(file, fieldnames = fields)
+
+#     writer.writeheader()
+#     writer.writerows(tradeList)
+        
+# to open/create a new html file in the write mode
+f = open('GFG.html', 'w')
+
+# the html code which will go in the file GFG.html
+html_start = """<html>
+<head>
+<title>RH</title>
+</head>
+<body>
+<h2>Robinhood</h2>
+"""
+html_mid = ""
+for line in tradeList:
+    if float(line['net']) > 10000:
+        ticker = line['ticker']
+
+        buyDate = line['buyDate']
         buyDateSplit = buyDate.split('/')
         buyDateDay, buyDateMonth, buyDateYear = int(buyDateSplit[1]), int(buyDateSplit[0]), int(buyDateSplit[2])
         
-        sellDate = contractDict[description]['endDate']
+        sellDate = line['sellDate']
         sellDateSplit = sellDate.split('/')
         sellDateDay, sellDateMonth, sellDateYear = int(sellDateSplit[1]), int(sellDateSplit[0]), int(sellDateSplit[2])
 
@@ -92,26 +135,20 @@ for line in filteredAccountActivityList:
         chartStartDateWeekly = (datetime.date(buyDateYear, buyDateMonth, buyDateDay) - datetime.timedelta(days = 600)).strftime("%Y-%m-%d")
         chartEndDateWeekly = (datetime.date(sellDateYear, sellDateMonth, sellDateDay) + datetime.timedelta(days = 82)).strftime("%Y-%m-%d")
 
-        obj = {
-            "ticker": ticker,
-            "contractDescription": description,
-            "net": str(amount),
-            "buyDate": buyDate,
-            "sellDate": sellDate
-        }
-        tradeList.append(obj)
+        dailyChartFilename = get_chart(ticker, '1d', chartStartDateDaily, chartEndDateDaily)
+        weeklyChartFilename = get_chart(ticker, '1w', chartStartDateDaily, chartEndDateWeekly)
 
-        del contractDict[description] # delete contract from the dictionary because the trade is done.  
+        html_mid += f"<h2>test ${line['ticker']}</h2><p><img src='charts\{dailyChartFilename}'><img src='charts\{weeklyChartFilename}'></p>"
 
-# field names for CSV output file
-fields = ['ticker', 'contractDescription', 'net', 'buyDate', 'sellDate'] 
+html_end = """
+</body>
+</html>
+"""
 
-# two paths because it changes depending on what computer im using
-path = 'C:\\Users\\Joe Satow\\OneDrive\\Random\\Documents\\GitHub\\robinReader\\output.csv'
-path = 'output.csv'
-with open(path, 'w', newline='') as file: 
-    writer = csv.DictWriter(file, fieldnames = fields)
+# writing the code into the file
+f.write(html_start)
+f.write(html_mid)
+f.write(html_end)
 
-    writer.writeheader()
-    writer.writerows(tradeList)
-        
+# close the file
+f.close()
