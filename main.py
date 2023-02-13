@@ -107,7 +107,9 @@ for line in filteredAccountDict:
 # field names 
 fields = ['ticker', 'contractDescription', 'net', 'buyDate', 'sellDate'] 
 
-with open('C:\\Users\\Joe Satow\\OneDrive\\Random\\Documents\\GitHub\\robinReader\\output.csv', 'w', newline='') as file: 
+path = 'C:\\Users\\Joe Satow\\OneDrive\\Random\\Documents\\GitHub\\robinReader\\output.csv'
+path = 'output.csv'
+with open(path, 'w', newline='') as file: 
     writer = csv.DictWriter(file, fieldnames = fields)
 
     writer.writeheader()
