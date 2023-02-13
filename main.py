@@ -54,7 +54,7 @@ for line in filteredAccountActivityList:
         ticker = description.split(' ')[0]
         quantity = -int(line['Quantity'].replace('S','')) # quantity here is how many contracts expired.  
         amount = 0 # 0 because the option expired worthless, equivalent to selling for 0 dollars.
-    else:
+    else: # standard BTC or STC line
         description = line['Description']
         quantity = int(line['Quantity'])
         amount = fixAmount(line['Amount'])
@@ -97,11 +97,7 @@ for line in filteredAccountActivityList:
             "contractDescription": description,
             "net": str(amount),
             "buyDate": buyDate,
-            "sellDate": sellDate,
-            "chartStartDaily": chartStartDateDaily,
-            "chartEndDaily": chartEndDateDaily,
-            "chartStartWeekly": chartStartDateWeekly,
-            "chartEndWeekly": chartEndDateWeekly
+            "sellDate": sellDate
         }
         tradeList.append(obj)
 
@@ -119,4 +115,3 @@ with open(path, 'w', newline='') as file:
     writer.writeheader()
     writer.writerows(tradeList)
         
-
