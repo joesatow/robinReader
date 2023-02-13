@@ -2,6 +2,7 @@ import pandas as pd
 import csv
 import datetime
 from helper_funcs.downloadFunctions import get_chart
+from operator import itemgetter
 
 # set filename to CSV file of account activity
 accountCSV = 'account_activity_8255.csv'
@@ -77,7 +78,7 @@ for line in filteredAccountActivityList:
     # once quantity in the contract dictionary equals 0, it means sells are equal to buys.  which means the trade is done.
     # create object with trade attributes and append it to the tradeList
     if contractDict[description]['quantity'] == 0:
-        amount = round(contractDict[description]['net'],2)
+        net = round(contractDict[description]['net'],2)
         
         buyDate = line['Process Date'] # buy date must be set here since CSV file shows orders from newest to oldest, from last sell -> first buy.  first buy will be here, once quantity nets out to 0.
         sellDate = contractDict[description]['endDate']
@@ -85,7 +86,7 @@ for line in filteredAccountActivityList:
         infoObj = {
             "ticker": ticker,
             "contractDescription": description,
-            "net": str(amount),
+            "net": net,
             "buyDate": buyDate,
             "sellDate": sellDate
         }
@@ -112,22 +113,26 @@ f = open('GFG.html', 'w')
 html_start = """<html>
 <head>
 <title>RH</title>
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<h2>Robinhood</h2>
+<h1>Robinhood</h1>
 """
 html_mid = ""
-for line in tradeList:
-    if float(line['net']) > 10000:
+sortedTradeList = sorted(tradeList, key=itemgetter('net'), reverse=False)
+for line in sortedTradeList:
+    if float(line['net']) < -5000:
         ticker = line['ticker']
 
         buyDate = line['buyDate']
         buyDateSplit = buyDate.split('/')
         buyDateDay, buyDateMonth, buyDateYear = int(buyDateSplit[1]), int(buyDateSplit[0]), int(buyDateSplit[2])
+        buyDate = datetime.datetime(buyDateYear,buyDateMonth,buyDateDay).strftime("%B %d, %Y")
         
         sellDate = line['sellDate']
         sellDateSplit = sellDate.split('/')
         sellDateDay, sellDateMonth, sellDateYear = int(sellDateSplit[1]), int(sellDateSplit[0]), int(sellDateSplit[2])
+        sellDate = datetime.datetime(sellDateYear,sellDateMonth,sellDateDay).strftime("%B %d, %Y")
 
         chartStartDateDaily = (datetime.date(buyDateYear, buyDateMonth, buyDateDay) - datetime.timedelta(days = 170)).strftime("%Y-%m-%d")
         chartEndDateDaily = (datetime.date(sellDateYear, sellDateMonth, sellDateDay) + datetime.timedelta(days = 10)).strftime("%Y-%m-%d")
@@ -136,16 +141,16 @@ for line in tradeList:
         chartEndDateWeekly = (datetime.date(sellDateYear, sellDateMonth, sellDateDay) + datetime.timedelta(days = 82)).strftime("%Y-%m-%d")
 
         dailyChartFilename = get_chart(ticker, '1d', chartStartDateDaily, chartEndDateDaily)
-        weeklyChartFilename = get_chart(ticker, '1w', chartStartDateDaily, chartEndDateWeekly)
+        weeklyChartFilename = get_chart(ticker, '1w', chartStartDateWeekly, chartEndDateWeekly)
 
         html_mid += f"""
         <h2>{line['contractDescription']}</h2>
-        <h3>Buy Date: {line['buyDate']}</h3>
-        <h3>Sell Date: {line['sellDate']}</h3>
-        <h3>Net: {line['net']}</h3>
+        <h3>Buy Date: {buyDate}</h3>
+        <h3>Sell Date: {sellDate}</h3>
+        <h3>Net: {'${:,.2f}'.format(float(line['net']))}</h3>
         <p>
-            <img src='charts\{dailyChartFilename}'>
             <img src='charts\{weeklyChartFilename}'>
+            <img src='charts\{dailyChartFilename}'>
         </p>"""
 
 html_end = """
