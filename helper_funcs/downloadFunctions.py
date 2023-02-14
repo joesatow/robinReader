@@ -4,8 +4,9 @@ import time
 from requests import Response
 from urllib.parse import urlencode
 from user_agent import generate_user_agent
+from API_keys import getKey
 
-sc_cookie = 'kAcSOqF21Fu85e7zjz7ZN2U4ZRhfV3WpwPAoE3Z7kBw&LswwdoUaIvS8ltyTt5jkRh4J50vUPVVHtR2YPi5kE'
+sc_cookie = getKey('sc_cookie')
 user_agent = generate_user_agent()
 
 # [0] = Daily, [1] = 4h, [2] = 1h, [3] = 1w
