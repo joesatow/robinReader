@@ -4,7 +4,7 @@ import time
 from requests import Response
 from urllib.parse import urlencode
 from user_agent import generate_user_agent
-from API_keys import getKey
+from .API_keys import getKey
 
 sc_cookie = getKey('sc_cookie')
 user_agent = generate_user_agent()
