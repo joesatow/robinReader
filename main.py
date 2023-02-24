@@ -44,6 +44,13 @@ def fixAmount(str):
     amount = float(amount)
     return amount
 
+# create datetime object based on account_activity date format
+def getDateObject(dateStr: str):
+    dateSplit = dateStr.split('/')
+    dateDay, dateMonth, dateYear = int(dateSplit[1]), int(dateSplit[0]), int(dateSplit[2])
+    dateObj = datetime.datetime(dateYear, dateMonth, dateDay)
+    return dateObj
+
 # Iterate through account activity
 for line in filteredAccountActivityList:
     transactionCode = line['Trans Code']
@@ -84,87 +91,94 @@ for line in filteredAccountActivityList:
         buyDate = line['Process Date'] # buy date must be set here since CSV file shows orders from newest to oldest, from last sell -> first buy.  first buy will be here, once quantity nets out to 0.
         sellDate = contractDict[description]['endDate']
         
+        buyDateObject = getDateObject(buyDate)
+        sellDateObject = getDateObject(sellDate)
+
+        buyDateDayOfWeek = buyDateObject.strftime('%A')
+        sellDateDayOfWeek = sellDateObject.strftime('%A')
+
+        daysHeld = (sellDateObject - buyDateObject).days
+
         infoObj = {
             "ticker": ticker,
             "contractDescription": description,
             "net": net,
             "buyDate": buyDate,
-            "sellDate": sellDate
+            "buyDateDayOfWeek": buyDateDayOfWeek,
+            "sellDate": sellDate,
+            "sellDateDayOfWeek": sellDateDayOfWeek,
+            "daysHeld": daysHeld
         }
         tradeList.append(infoObj)
 
         del contractDict[description] # delete contract from the dictionary because the trade is done.  
 
-# # field names for CSV output file
-# fields = ['ticker', 'contractDescription', 'net', 'buyDate', 'sellDate'] 
+# field names for CSV output file
+fields = ['ticker', 'contractDescription', 'net', 'buyDate', 'buyDateDayOfWeek', 'sellDate', 'sellDateDayOfWeek', 'daysHeld'] 
 
-# # two paths because it changes depending on what computer im using
-# path = 'C:\\Users\\Joe Satow\\OneDrive\\Random\\Documents\\GitHub\\robinReader\\output.csv'
-# path = 'output.csv'
-# with open(path, 'w', newline='') as file: 
-#     writer = csv.DictWriter(file, fieldnames = fields)
+# two paths because it changes depending on what computer im using
+path = 'C:\\Users\\Joe Satow\\OneDrive\\Random\\Documents\\GitHub\\robinReader\\output.csv'
+path = 'output.csv'
+with open(path, 'w', newline='') as file: 
+    writer = csv.writer(file)
+    writer.writerow(['Ticker', 'Description', 'Net', 'Buy Date', 'Day', 'Sell Date', 'Day', 'Days Held'])
 
-#     writer.writeheader()
-#     writer.writerows(tradeList)
+    writer = csv.DictWriter(file, fieldnames = fields)
+    writer.writerows(tradeList)
         
-# to open/create a new html file in the write mode
-f = open('GFG.html', 'w')
 
-# the html code which will go in the file GFG.html
-html_start = """<html>
-<head>
-<title>RH</title>
-<link rel="stylesheet" href="styles.css">
-</head>
-<body>
-<h1>Robinhood</h1>
-"""
-html_mid = ""
-sortedTradeList = sorted(tradeList, key=itemgetter('net'), reverse=False)
-for line in sortedTradeList:
-    net = float(line['net'])
-    if net > 20000:
-        ticker = line['ticker']
 
-        buyDate = line['buyDate']
-        buyDateSplit = buyDate.split('/')
-        buyDateDay, buyDateMonth, buyDateYear = int(buyDateSplit[1]), int(buyDateSplit[0]), int(buyDateSplit[2])
-        buyDate = datetime.datetime(buyDateYear,buyDateMonth,buyDateDay).strftime("%B %d, %Y")
-        
-        sellDate = line['sellDate']
-        sellDateSplit = sellDate.split('/')
-        sellDateDay, sellDateMonth, sellDateYear = int(sellDateSplit[1]), int(sellDateSplit[0]), int(sellDateSplit[2])
-        sellDate = datetime.datetime(sellDateYear,sellDateMonth,sellDateDay).strftime("%B %d, %Y")
+# # to open/create a new html file in the write mode
+# f = open('GFG.html', 'w')
 
-        chartStartDateDaily = (datetime.date(buyDateYear, buyDateMonth, buyDateDay) - datetime.timedelta(days = 170)).strftime("%Y-%m-%d")
-        chartEndDateDaily = (datetime.date(sellDateYear, sellDateMonth, sellDateDay) + datetime.timedelta(days = 10)).strftime("%Y-%m-%d")
+# # the html code which will go in the file GFG.html
+# html_start = """<html>
+# <head>
+# <title>RH</title>
+# <link rel="stylesheet" href="styles.css">
+# </head>
+# <body>
+# <h1>Robinhood</h1>
+# """
+# html_mid = ""
+# sortedTradeList = sorted(tradeList, key=itemgetter('net'), reverse=False)
+# for line in sortedTradeList:
+#     net = float(line['net'])
+#     if net > 20000:
+#         ticker = line['ticker']
 
-        chartStartDateWeekly = (datetime.date(buyDateYear, buyDateMonth, buyDateDay) - datetime.timedelta(days = 600)).strftime("%Y-%m-%d")
-        chartEndDateWeekly = (datetime.date(sellDateYear, sellDateMonth, sellDateDay) + datetime.timedelta(days = 82)).strftime("%Y-%m-%d")
+#         buyDate = getDateObject(line['buyDate']).strftime("%B %d, %Y")
+#         sellDate = getDateObject(line['sellDate']).strftime("%B %d, %Y")
 
-        time.sleep(0.5)
-        dailyChartFilename = get_chart(ticker, '1d', chartStartDateDaily, chartEndDateDaily)
-        weeklyChartFilename = get_chart(ticker, '1w', chartStartDateWeekly, chartEndDateWeekly)
+#         chartStartDateDaily = (datetime.date(buyDateYear, buyDateMonth, buyDateDay) - datetime.timedelta(days = 170)).strftime("%Y-%m-%d")
+#         chartEndDateDaily = (datetime.date(sellDateYear, sellDateMonth, sellDateDay) + datetime.timedelta(days = 10)).strftime("%Y-%m-%d")
 
-        html_mid += f"""
-        <h2>{line['contractDescription']}</h2>
-        <h3>Buy Date: {buyDate}</h3>
-        <h3>Sell Date: {sellDate}</h3>
-        <h3>Net: {'${:,.2f}'.format(float(line['net']))}</h3>
-        <p>
-            <img src='charts\{weeklyChartFilename}'>
-            <img src='charts\{dailyChartFilename}'>
-        </p>"""
+#         chartStartDateWeekly = (datetime.date(buyDateYear, buyDateMonth, buyDateDay) - datetime.timedelta(days = 600)).strftime("%Y-%m-%d")
+#         chartEndDateWeekly = (datetime.date(sellDateYear, sellDateMonth, sellDateDay) + datetime.timedelta(days = 82)).strftime("%Y-%m-%d")
 
-html_end = """
-</body>
-</html>
-"""
+#         time.sleep(0.5)
+#         dailyChartFilename = get_chart(ticker, '1d', chartStartDateDaily, chartEndDateDaily)
+#         weeklyChartFilename = get_chart(ticker, '1w', chartStartDateWeekly, chartEndDateWeekly)
 
-# writing the code into the file
-f.write(html_start)
-f.write(html_mid)
-f.write(html_end)
+#         html_mid += f"""
+#         <h2>{line['contractDescription']}</h2>
+#         <h3>Buy Date: {buyDate}</h3>
+#         <h3>Sell Date: {sellDate}</h3>
+#         <h3>Net: {'${:,.2f}'.format(float(line['net']))}</h3>
+#         <p>
+#             <img src='charts\{weeklyChartFilename}'>
+#             <img src='charts\{dailyChartFilename}'>
+#         </p>"""
 
-# close the file
-f.close()
+# html_end = """
+# </body>
+# </html>
+# """
+
+# # writing the code into the file
+# f.write(html_start)
+# f.write(html_mid)
+# f.write(html_end)
+
+# # close the file
+# f.close()
