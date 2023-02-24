@@ -73,19 +73,21 @@ for line in filteredAccountActivityList:
     if description not in contractDict:
         contractDict[description] = {
             'ticker': '',
-            'quantity': 0,
+            'currentQuantity': 0,
+            'cons': 0,
             'net': 0,
             'startDate': '',
             'endDate': line['Process Date']
         }
 
     contractDict[description]['ticker'] = ticker
-    contractDict[description]['quantity'] += quantity # add quantity.  since there's both positive (buys) and negative (sells) values, it'll eventually zero out (trade is done).
+    contractDict[description]['currentQuantity'] += quantity # add quantity.  since there's both positive (buys) and negative (sells) values, it'll eventually zero out (trade is done).
+    contractDict[description]['cons'] = max(contractDict[description]['cons'], abs(contractDict[description]['currentQuantity']))
     contractDict[description]['net'] += amount 
 
     # once quantity in the contract dictionary equals 0, it means sells are equal to buys.  which means the trade is done.
     # create object with trade attributes and append it to the tradeList
-    if contractDict[description]['quantity'] == 0:
+    if contractDict[description]['currentQuantity'] == 0:
         net = round(contractDict[description]['net'],2)
         
         buyDate = line['Process Date'] # buy date must be set here since CSV file shows orders from newest to oldest, from last sell -> first buy.  first buy will be here, once quantity nets out to 0.
@@ -103,6 +105,7 @@ for line in filteredAccountActivityList:
             "ticker": ticker,
             "contractDescription": description,
             "net": net,
+            "contracts": contractDict[description]['cons'],
             "buyDate": buyDate,
             "buyDateDayOfWeek": buyDateDayOfWeek,
             "sellDate": sellDate,
@@ -114,14 +117,14 @@ for line in filteredAccountActivityList:
         del contractDict[description] # delete contract from the dictionary because the trade is done.  
 
 # field names for CSV output file
-fields = ['ticker', 'contractDescription', 'net', 'buyDate', 'buyDateDayOfWeek', 'sellDate', 'sellDateDayOfWeek', 'daysHeld'] 
+fields = ['ticker', 'contractDescription', 'net', 'contracts', 'buyDate', 'buyDateDayOfWeek', 'sellDate', 'sellDateDayOfWeek', 'daysHeld'] 
 
 # two paths because it changes depending on what computer im using
 path = 'C:\\Users\\Joe Satow\\OneDrive\\Random\\Documents\\GitHub\\robinReader\\output.csv'
 path = 'output.csv'
 with open(path, 'w', newline='') as file: 
     writer = csv.writer(file)
-    writer.writerow(['Ticker', 'Description', 'Net', 'Buy Date', 'Day', 'Sell Date', 'Day', 'Days Held'])
+    writer.writerow(['Ticker', 'Description', 'Net', 'Contracts', 'Buy Date', 'Day', 'Sell Date', 'Day', 'Days Held'])
 
     writer = csv.DictWriter(file, fieldnames = fields)
     writer.writerows(tradeList)
