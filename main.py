@@ -65,7 +65,7 @@ for line in filteredAccountActivityList:
         quantity = -int(line['Quantity'].replace('S','')) # quantity here is how many contracts expired.  
         amount = 0 # 0 because the option expired worthless, equivalent to selling for 0 dollars.
         letExpire = True
-    else: # standard BTC or STC line
+    else: # standard BTO or STC line
         description = line['Description']
         quantity = int(line['Quantity'])
         amount = fixAmount(line['Amount'])
@@ -77,6 +77,10 @@ for line in filteredAccountActivityList:
             'ticker': '',
             'currentQuantity': 0,
             'cons': 0,
+            'buySum': 0,
+            'buyCons': 0,
+            'sellSum': 0,
+            'sellCons': 0,
             'net': 0,
             'startDate': '',
             'endDate': line['Process Date'],
@@ -89,10 +93,23 @@ for line in filteredAccountActivityList:
     contractDict[description]['net'] += amount
     if letExpire: 
         contractDict[description]['letExpire'] = 'Yes'
+    if transactionCode == 'BTO':
+        contractDict[description]['buySum'] += amount
+        contractDict[description]['buyCons'] += quantity
+    else: # STC or OEXP
+        contractDict[description]['sellSum'] += amount
+        contractDict[description]['sellCons'] += quantity
 
     # once quantity in the contract dictionary equals 0, it means sells are equal to buys.  which means the trade is done.
     # create object with trade attributes and append it to the tradeList
     if contractDict[description]['currentQuantity'] == 0:
+        buySum = contractDict[description]['buySum']
+        buyCons = contractDict[description]['buyCons']
+        sellSum = contractDict[description]['sellSum'] 
+        sellCons = contractDict[description]['sellCons']
+        averageBuy = abs(round((buySum / buyCons)/100, 2))
+        averageSell = abs(round((sellSum / sellCons)/100, 2))
+
         net = round(contractDict[description]['net'],2)
         
         buyDate = line['Process Date'] # buy date must be set here since CSV file shows orders from newest to oldest, from last sell -> first buy.  first buy will be here, once quantity nets out to 0.
@@ -109,6 +126,8 @@ for line in filteredAccountActivityList:
         infoObj = {
             "ticker": ticker,
             "contractDescription": description,
+            "averageBuy": averageBuy,
+            "averageSell": averageSell,
             "net": net,
             "contracts": contractDict[description]['cons'],
             "buyDate": buyDate,
@@ -123,14 +142,14 @@ for line in filteredAccountActivityList:
         del contractDict[description] # delete contract from the dictionary because the trade is done.  
 
 # field names for CSV output file
-fields = ['ticker', 'contractDescription', 'net', 'contracts', 'buyDate', 'buyDateDayOfWeek', 'sellDate', 'sellDateDayOfWeek', 'daysHeld', 'letExpire'] 
+fields = ['ticker', 'contractDescription', 'contracts', 'averageBuy', 'averageSell', 'net', 'buyDate', 'buyDateDayOfWeek', 'sellDate', 'sellDateDayOfWeek', 'daysHeld', 'letExpire'] 
 
 # two paths because it changes depending on what computer im using
 path = 'C:\\Users\\Joe Satow\\OneDrive\\Random\\Documents\\GitHub\\robinReader\\output.csv'
 path = 'output.csv'
 with open(path, 'w', newline='') as file: 
     writer = csv.writer(file)
-    writer.writerow(['Ticker', 'Description', 'Net', 'Contracts', 'Buy Date', 'Day', 'Sell Date', 'Day', 'Days Held', 'Let Expire?'])
+    writer.writerow(['Ticker', 'Description', 'Contracts', 'Average Buy', 'Average Sell', 'Net', 'Buy Date', 'Day', 'Sell Date', 'Day', 'Days Held', 'Let Expire?'])
 
     writer = csv.DictWriter(file, fieldnames = fields)
     writer.writerows(tradeList)
