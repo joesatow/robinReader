@@ -54,7 +54,7 @@ def getDateObject(dateStr: str):
 # Iterate through account activity
 for line in filteredAccountActivityList:
     transactionCode = line['Trans Code']
-
+    
     # OEXP = option expiration
     # we'll need to get description, ticker, and quantity values differently if we're reading from a OEXP transaction code, because this is just the way Robinhood provided the data.
     # these transactions will act the same as a 'sell'.  example: 10 contracts expired acts as 10 contracts sold for 0 dollars. 
@@ -64,11 +64,13 @@ for line in filteredAccountActivityList:
         ticker = description.split(' ')[0]
         quantity = -int(line['Quantity'].replace('S','')) # quantity here is how many contracts expired.  
         amount = 0 # 0 because the option expired worthless, equivalent to selling for 0 dollars.
+        letExpire = True
     else: # standard BTC or STC line
         description = line['Description']
         quantity = int(line['Quantity'])
         amount = fixAmount(line['Amount'])
         ticker = line['Instrument']
+        letExpire = False
 
     if description not in contractDict:
         contractDict[description] = {
@@ -77,13 +79,16 @@ for line in filteredAccountActivityList:
             'cons': 0,
             'net': 0,
             'startDate': '',
-            'endDate': line['Process Date']
+            'endDate': line['Process Date'],
+            'letExpire': ''
         }
 
     contractDict[description]['ticker'] = ticker
     contractDict[description]['currentQuantity'] += quantity # add quantity.  since there's both positive (buys) and negative (sells) values, it'll eventually zero out (trade is done).
     contractDict[description]['cons'] = max(contractDict[description]['cons'], abs(contractDict[description]['currentQuantity']))
-    contractDict[description]['net'] += amount 
+    contractDict[description]['net'] += amount
+    if letExpire: 
+        contractDict[description]['letExpire'] = 'Yes'
 
     # once quantity in the contract dictionary equals 0, it means sells are equal to buys.  which means the trade is done.
     # create object with trade attributes and append it to the tradeList
@@ -110,21 +115,22 @@ for line in filteredAccountActivityList:
             "buyDateDayOfWeek": buyDateDayOfWeek,
             "sellDate": sellDate,
             "sellDateDayOfWeek": sellDateDayOfWeek,
-            "daysHeld": daysHeld
+            "daysHeld": daysHeld,
+            "letExpire": contractDict[description]['letExpire'] or "No"
         }
         tradeList.append(infoObj)
 
         del contractDict[description] # delete contract from the dictionary because the trade is done.  
 
 # field names for CSV output file
-fields = ['ticker', 'contractDescription', 'net', 'contracts', 'buyDate', 'buyDateDayOfWeek', 'sellDate', 'sellDateDayOfWeek', 'daysHeld'] 
+fields = ['ticker', 'contractDescription', 'net', 'contracts', 'buyDate', 'buyDateDayOfWeek', 'sellDate', 'sellDateDayOfWeek', 'daysHeld', 'letExpire'] 
 
 # two paths because it changes depending on what computer im using
 path = 'C:\\Users\\Joe Satow\\OneDrive\\Random\\Documents\\GitHub\\robinReader\\output.csv'
 path = 'output.csv'
 with open(path, 'w', newline='') as file: 
     writer = csv.writer(file)
-    writer.writerow(['Ticker', 'Description', 'Net', 'Contracts', 'Buy Date', 'Day', 'Sell Date', 'Day', 'Days Held'])
+    writer.writerow(['Ticker', 'Description', 'Net', 'Contracts', 'Buy Date', 'Day', 'Sell Date', 'Day', 'Days Held', 'Let Expire?'])
 
     writer = csv.DictWriter(file, fieldnames = fields)
     writer.writerows(tradeList)
