@@ -109,6 +109,10 @@ for line in filteredAccountActivityList:
         sellCons = contractDict[description]['sellCons']
         averageBuy = abs(round((buySum / buyCons)/100, 2))
         averageSell = abs(round((sellSum / sellCons)/100, 2))
+        if averageSell == 0:
+            pctChange = -1
+        else:
+            pctChange = -round(((averageBuy - averageSell) / averageBuy), 4)
 
         cons = contractDict[description]['cons']
         net = round(contractDict[description]['net'],2)
@@ -131,6 +135,7 @@ for line in filteredAccountActivityList:
             "totalBuy": averageBuy * cons * 100,
             "averageSell": averageSell,
             "totalSell": averageSell * cons * 100,
+            "pctChange": pctChange,
             "net": net,
             "contracts": cons,
             "buyDate": buyDate,
@@ -145,14 +150,14 @@ for line in filteredAccountActivityList:
         del contractDict[description] # delete contract from the dictionary because the trade is done.  
 
 # field names for CSV output file
-fields = ['ticker', 'contractDescription', 'contracts', 'averageBuy', 'totalBuy', 'averageSell', 'totalSell', 'net', 'buyDate', 'buyDateDayOfWeek', 'sellDate', 'sellDateDayOfWeek', 'daysHeld', 'letExpire'] 
+fields = ['ticker', 'contractDescription', 'contracts', 'averageBuy', 'totalBuy', 'averageSell', 'totalSell', 'pctChange', 'net', 'buyDate', 'buyDateDayOfWeek', 'sellDate', 'sellDateDayOfWeek', 'daysHeld', 'letExpire'] 
 
 # two paths because it changes depending on what computer im using
 path = 'C:\\Users\\Joe Satow\\OneDrive\\Random\\Documents\\GitHub\\robinReader\\output.csv'
 path = 'output.csv'
 with open(path, 'w', newline='') as file: 
     writer = csv.writer(file)
-    writer.writerow(['Ticker', 'Description', 'Contracts', 'Average Buy', 'Total Buy', 'Average Sell', 'Total Sell', 'Net', 'Buy Date', 'Day', 'Sell Date', 'Day', 'Days Held', 'Let Expire?'])
+    writer.writerow(['Ticker', 'Description', 'Contracts', 'Average Buy', 'Total Buy', 'Average Sell', 'Total Sell', 'Percent Change', 'Net', 'Buy Date', 'Day', 'Sell Date', 'Day', 'Days Held', 'Let Expire?'])
 
     writer = csv.DictWriter(file, fieldnames = fields)
     writer.writerows(tradeList)
