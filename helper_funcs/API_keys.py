@@ -7,4 +7,4 @@ import os
 # Function to grab keys 
 def getKey(key):
     if key == "sc_cookie":
-        return "kAcSOqF21Fu85e7zjz7ZN2U4ZRhfV3WpwPAoE3Z7kBw&LswwdoUaIvS8ltyTt5jkRh4J50vUPVVHtR2YPi5kE"
+        return None
