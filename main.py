@@ -6,7 +6,32 @@ from operator import itemgetter
 import time
 
 # set filename to CSV file of account activity
-accountCSV = 'account_activity_8255.csv'
+accountCSV = '/Users/joe/Documents/tests/robinReader/activity.csv'
+
+def remove_last_rows(csv_file):
+    # Step 1: Open the CSV file in read mode
+    with open(csv_file, 'r') as file:
+        # Step 2: Read all the rows from the CSV file
+        rows = list(csv.reader(file))
+    
+    # Step 3: Close the file
+    file.close()
+
+    # check if last row needs to be removed
+    # needs to be removed if more than 10 columns - this 10th column is robinhood's message they put at the end.
+    # row before this is also blank. thats why we can remove two lines.
+    if len(rows[-1]) == 10:
+        # Step 4: Open the CSV file in write mode
+        with open(csv_file, 'w') as file:
+            # Step 5: Write all the rows except the last one back into the file
+            writer = csv.writer(file)
+            writer.writerows(rows[:-2])
+        
+        # Step 6: Close the file
+        file.close()
+
+# Usage
+remove_last_rows(accountCSV)
 
 # create pandas dataframe
 df = pd.read_csv(accountCSV)
